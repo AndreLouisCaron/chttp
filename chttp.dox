@@ -1,0 +1,36 @@
+/*!
+ * @mainpage
+ * @tableofcontents
+ *
+ * @section intro Introduction
+ *
+ * `chttp` is a Simple buffering utility for HTTP headers.  It is designed to
+ * be as simple as possible to use, even if the price to pay is some
+ * inefficiency.  It was designed to be reused in a variety of projects that
+ * deal with HTTP request and responses and that need to repeat this boiler
+ * plate buffering code over and over again.  It is provided to you in the hope
+ * that it will be useful, but please perform a detailed evaluation before
+ * attempting to use it in production.
+ *
+ * @section implementation Implementation
+ *
+ * The buffer is flat, never grows and uses a single @c malloc() call in the
+ * "constructor" to pre-allocate enough memory.  This requires you to estimate
+ * how much memory you need in advance.  On the other hand, it makes it very
+ * convenient to impose memory usage limits on HTTP request buffers (a very
+ * common technique in high-performance production servers).
+ *
+ * @section APIs
+ *
+ * The library exposes two APIs: one for C and one for C++.  The former is the
+ * primary API and the second is simply a quick wrapper that can be used for
+ * quick scripts and testing purposes.  The C++ API uses @c std::string
+ * parameters and return values causing extra overhead (considering the fact
+ * that the buffer is preallocated and may be referenced directly as long as
+ * the @c http_head object is not destroyed).
+ *
+ * @section licensing Licensing
+ *
+ * The code is licensed under the terms of a very permissive BSD license.
+ * Consult the `LICENSE.txt` file for details.
+ */
