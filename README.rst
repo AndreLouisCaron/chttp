@@ -22,7 +22,8 @@ The following presents the *supported* way to get up and running with
 ``chttp``.  Feel free to experiment with your toolchain of choice.
 
 Consult the HTML documentation for detailed instructions on compiling and using
-the library.
+the library:
+- `v0.1 <http://andrelouiscaron.github.com/chttp/api/v0.1/>`
 
 Requirements
 ------------
