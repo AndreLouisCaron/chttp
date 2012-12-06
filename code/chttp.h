@@ -1,5 +1,5 @@
-#ifndef _chttp_head_h__
-#define _chttp_head_h__
+#ifndef _chttp_h__
+#define _chttp_h__
 
 // Copyright (c) 2012, Andre Caron (andre.l.caron@gmail.com)
 // All rights reserved.
@@ -212,4 +212,4 @@ int http_cursor_next (http_cursor * self);
 }
 #endif
 
-#endif /* _chttp_head_h__ */
+#endif /* _chttp_h__ */

@@ -24,12 +24,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 set(chttp_headers
-  head.h
-  head.hpp
+  chttp.h
+  chttp.hpp
 )
 set(chttp_sources
-  head.c
-  head.cpp
+  chttp.c
+  chttp.cpp
 )
 add_library(chttp
   STATIC

@@ -5,7 +5,7 @@ if(NOT DEFINED chttp_FOUND)
 
   # Locate library headers.
   find_path(chttp_include_dir
-    NAMES head.h
+    NAMES chttp.h
     PATHS ${chttp_DIR}/code
   )
 

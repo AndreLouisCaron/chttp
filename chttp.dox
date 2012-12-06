@@ -65,7 +65,7 @@
  *  find_package(chttp)
  * @endcode
  *
- * Make sure your CMake project can `#include <head.h>`:
+ * Make sure your CMake project can resolve `chttp`'s header files:
  * @code
  *  include_directories(
  *    ${chttp_include_dirs}

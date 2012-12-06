@@ -1,5 +1,5 @@
-#ifndef _chttp_head_hpp__
-#define _chttp_head_hpp__
+#ifndef _chttp_hpp__
+#define _chttp_hpp__
 
 // Copyright (c) 2012, Andre Caron (andre.l.caron@gmail.com)
 // All rights reserved.
@@ -31,7 +31,7 @@
  * @brief C++ API definition.
  */
 
-#include "head.h"
+#include "chttp.h"
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -182,4 +182,4 @@ namespace http {
 
 }
 
-#endif /* _chttp_head_hpp__ */
+#endif /* _chttp_hpp__ */
