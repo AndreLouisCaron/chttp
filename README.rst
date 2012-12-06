@@ -23,7 +23,7 @@ The following presents the *supported* way to get up and running with
 
 Consult the HTML documentation for detailed instructions on compiling and using
 the library:
-- `v0.1 <http://andrelouiscaron.github.com/chttp/api/v0.1/>`
+- `v0.1 <http://andrelouiscaron.github.com/chttp/api/v0.1/>`_
 
 Requirements
 ------------
