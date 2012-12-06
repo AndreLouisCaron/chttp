@@ -23,12 +23,33 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-add_executable(demo-c   demo.c)
-add_dependencies(demo-c chttp)
-target_link_libraries(demo-c ${chttp_libraries})
-set_target_properties(demo-c PROPERTIES FOLDER demo)
+# Simple macro to generate consistent test cases.  Each test case is a
+# standalone program based on "chttp" with the following contraints:
+# - the program is a contained in a single source file;
+# - the program requires no dependencies other than "chttp";
+# - the program runs without command-line arguments;
+# - the program returns a non-zero process status to indicate failure.
+macro(add_test_program name)
+  # Build the test program.
+  add_executable(${name} ${name}.c)
+  add_dependencies(${name} chttp)
+  target_link_libraries(${name} ${chttp_libraries})
 
-add_executable(demo-c++ demo.cpp)
-add_dependencies(demo-c++ chttp)
-target_link_libraries(demo-c++ ${chttp_libraries})
-set_target_properties(demo-c++ PROPERTIES FOLDER demo)
+  # Group tests in a "test" folder.
+  set_target_properties(${name} PROPERTIES FOLDER test)
+
+  # Register the test.
+  add_test(
+    NAME    ${name}
+    COMMAND ${name}
+  )
+endmacro()
+
+# Make sure all demo programs successfully terminate.
+add_test(NAME test-demo-c   COMMAND demo-c)
+add_test(NAME test-demo-c++ COMMAND demo-c++)
+
+# Register several test programs.
+add_test_program(test-partial-push-success)
+add_test_program(test-partial-push-field-overflow)
+add_test_program(test-partial-push-value-overflow)

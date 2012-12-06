@@ -124,6 +124,84 @@ int http_head_push (http_head * self, const char * field, const char * value);
 const char * http_head_find (const http_head * self, const char * field);
 
 /*!
+ * @brief Take the current position in the stream.
+ * @param self
+ * @return A value suitable for passing to @c http_head_cancel.
+ *
+ * @see http_head_cancel
+ * @see http_head_push_field
+ * @see http_head_push_value
+ */
+size_t http_head_mark (const http_head * self);
+
+/*!
+ * @brief Appends partial header data.
+ * @param self
+ * @param field Part of the HTTP header name.
+ * @param size Number of valid bytes starting at @a field.
+ * @return 0 on failure (e.g. attempted to exceed the buffer capacity), else
+ *  non-zero.
+ *
+ * @pre The caller has acquired a mark using @c http_head_mark.
+ * @post The buffer's invariants are broken, iteration using @c http_cursor is
+ *  prohibited.  A successful call to @c http_head_cancel or @c
+ *  http_head_commit is required to restore the buffer invariants.
+ *
+ * @see http_head_mark
+ * @see http_head_push_value
+ */
+int http_head_push_field (http_head * self, const char * field, size_t size);
+
+/*!
+ * @brief Appends partial header data.
+ * @param self
+ * @param value Part of the HTTP header data.
+ * @param size Number of valid bytes starting at @a value.
+ * @return 0 on failure (e.g. attempted to exceed the buffer capacity), else
+ *  non-zero.
+ *
+ * @pre @c http_head_push_field just succeeded.
+ *
+ * @see http_head_mark
+ * @see http_head_push_field
+ */
+int http_head_push_value (http_head * self, const char * value, size_t size);
+
+/*!
+ * @brief Restore the header invariants after a successful partial push.
+ * @param self
+ * @return 0 on failure (e.g. invariants are not respected), else non-zero.
+ *
+ * @pre @c http_head_push_value just succeeded.
+ * @post The buffer's invariants are restored.  If the function returns 0, and
+ *  the sequence of partial push operations is cancelled.  If the function
+ *  returns non-zero, @a self does not include the partial push operations.
+ *
+ * @see http_head_push_field
+ * @see http_head_push_value
+ * @see http_head_cancel
+ */
+int http_head_commit (http_head * self, size_t mark);
+
+/*!
+ * @brief Restore a previous state after a failed partial push.
+ * @param self
+ * @param mark A value obtained using @c http_head_mark before the partial push
+ *  operation began.
+ * @return 0 on failure (e.g. @a mark is invalid), else non-zero.
+ *
+ * @pre A call to @c http_head_push_value or @c http_head_push_field just
+ *  failed.
+ * @post If the function succeeds, the buffer's invariants are restored.
+ *
+ * @see http_head_mark
+ * @see http_head_push_field
+ * @see http_head_push_value
+ * @see http_head_commit
+ */
+int http_head_cancel (http_head * self, size_t mark);
+
+/*!
  * @brief Iterator for HTTP headers.
  *
  * Recommended use:

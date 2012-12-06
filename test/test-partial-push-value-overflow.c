@@ -25,36 +25,43 @@
 
 /*!
  * @file
- * @brief C demo program.
+ * @brief Test that validates that a overflow detection succeeds.
  */
 
 #include <chttp.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-int main (int argc, char ** argv)
+int main(int argc, char ** argv)
 {
-    http_cursor cursor;
+    const char field[] = "Content-Lenght";
+    const char value[] = "4096";
+    size_t mark = 0;
+    const char * match = 0;
 
-    // Prepare.
     http_head head;
-    http_head_init(&head, 4*1024);
+    http_head_init(&head, 20);
 
-    // Acquire.
-    http_head_push(&head, "Content-Length", "123");
-    http_head_push(&head, "Content-Type", "application/json");
-
-    // Iterate.
-    http_cursor_init(&cursor, &head);
-    while (http_cursor_next(&cursor)) {
-        fprintf(stdout, "'%s': '%s'.\n", cursor.field, cursor.value);
+    // Verify our test data :-)
+    if (strlen(field)+strlen(value)+3 <= head.size)
+    {
+        fprintf(stderr, "Test buffer too large.\n");
+        return (EXIT_FAILURE);
     }
 
-    // Search.
-    fprintf(stdout, "size: '%s'.\n", http_head_find(&head, "Content-Length"));
-    fprintf(stdout, "type: '%s'.\n", http_head_find(&head, "Content-Type"));
-    fprintf(stdout, "auth: '%s'.\n", http_head_find(&head, "Authorization"));
+    // Attempt to push more data than the buffer can hold.
+    mark = http_head_mark(&head);
+    if (!http_head_push_field(&head, field, strlen(field)))
+    {
+        fprintf(stderr, "Field push should succeed.\n");
+        return (EXIT_FAILURE);
+    }
+    if (http_head_push_value(&head, value, strlen(value)))
+    {
+        fprintf(stderr, "Value push should fail.\n");
+        return (EXIT_FAILURE);
+    }
 
-    // Release.
-    http_head_kill(&head);
+    return (EXIT_SUCCESS);
 }

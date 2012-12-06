@@ -25,36 +25,54 @@
 
 /*!
  * @file
- * @brief C demo program.
+ * @brief Test for a successful partial push sequence.
  */
 
 #include <chttp.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-int main (int argc, char ** argv)
+int main(int argc, char ** argv)
 {
-    http_cursor cursor;
+    const char field[] = "Content-Lenght";
+    const char value[] = "201";
+    size_t mark = 0;
+    const char * match = 0;
 
-    // Prepare.
     http_head head;
     http_head_init(&head, 4*1024);
 
-    // Acquire.
-    http_head_push(&head, "Content-Length", "123");
-    http_head_push(&head, "Content-Type", "application/json");
-
-    // Iterate.
-    http_cursor_init(&cursor, &head);
-    while (http_cursor_next(&cursor)) {
-        fprintf(stdout, "'%s': '%s'.\n", cursor.field, cursor.value);
+    // Check that a single call to each part succeeds.
+    mark = http_head_mark(&head);
+    if (!http_head_push_field(&head, field, strlen(field)))
+    {
+        fprintf(stderr, "Could not push field.\n");
+        return (EXIT_FAILURE);
+    }
+    if (!http_head_push_field(&head, value, strlen(value)))
+    {
+        fprintf(stderr, "Could not push value.\n");
+        return (EXIT_FAILURE);
+    }
+    if (!http_head_commit(&head, mark))
+    {
+        fprintf(stderr, "Could not commit.\n");
+        return (EXIT_FAILURE);
     }
 
-    // Search.
-    fprintf(stdout, "size: '%s'.\n", http_head_find(&head, "Content-Length"));
-    fprintf(stdout, "type: '%s'.\n", http_head_find(&head, "Content-Type"));
-    fprintf(stdout, "auth: '%s'.\n", http_head_find(&head, "Authorization"));
+    // Verify that the header value is found and matches.
+    match = http_head_find(&head, field);
+    if (strlen(match) == 0)
+    {
+        fprintf(stderr, "Header not found.\n");
+        return (EXIT_FAILURE);
+    }
+    if (strcmp(match, value) != 0)
+    {
+        fprintf(stderr, "Header value doesn't match.\n");
+        return (EXIT_FAILURE);
+    }
 
-    // Release.
-    http_head_kill(&head);
+    return (EXIT_SUCCESS);
 }

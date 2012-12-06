@@ -93,6 +93,11 @@
  *  nmake
  * @endcode
  *
+ * Run the test suite:
+ * @code
+ *  nmake /A test
+ * @endcode
+ *
  * @subsection documentation Compiling the documentation
  *
  * Compiling the documentation for developer builds:

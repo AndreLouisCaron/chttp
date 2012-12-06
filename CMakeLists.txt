@@ -40,6 +40,9 @@ endif()
 set(LIBRARY_OUTPUT_PATH    "${PROJECT_BINARY_DIR}")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
+# Allow use of folders to group related targets.
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Build the primary target.
 add_subdirectory(code)
 
@@ -83,5 +86,9 @@ if("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
       VERBATIM
     )
   endif()
+
+  # Register test suite.
+  enable_testing()
+  add_subdirectory(test)
 
 endif()
