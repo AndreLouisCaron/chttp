@@ -2,9 +2,10 @@
  * @mainpage
  * @tableofcontents
  *
+ *
  * @section intro Introduction
  *
- * `chttp` is a Simple buffering utility for HTTP headers.  It is designed to
+ * `chttp` is a simple buffering utility for HTTP headers.  It is designed to
  * be as simple as possible to use, even if the price to pay is some
  * inefficiency.  It was designed to be reused in a variety of projects that
  * deal with HTTP request and responses and that need to repeat this boiler
@@ -12,7 +13,12 @@
  * that it will be useful, but please perform a detailed evaluation before
  * attempting to use it in production.
  *
- * @section implementation Implementation
+ * @subsection licensing Licensing
+ *
+ * The code is licensed under the terms of a very permissive BSD license.
+ * Consult the `LICENSE.txt` file for details.
+ *
+ * @subsection implementation Implementation
  *
  * The buffer is flat, never grows and uses a single @c malloc() call in the
  * "constructor" to pre-allocate enough memory.  This requires you to estimate
@@ -20,7 +26,7 @@
  * convenient to impose memory usage limits on HTTP request buffers (a very
  * common technique in high-performance production servers).
  *
- * @section APIs
+ * @subsection APIs
  *
  * The library exposes two APIs: one for C and one for C++.  The former is the
  * primary API and the second is simply a quick wrapper that can be used for
@@ -29,8 +35,78 @@
  * that the buffer is preallocated and may be referenced directly as long as
  * the @c http_head object is not destroyed).
  *
- * @section licensing Licensing
  *
- * The code is licensed under the terms of a very permissive BSD license.
- * Consult the `LICENSE.txt` file for details.
+ * @section guide User's guide
+ *
+ * @subsection embed Embedding
+ *
+ * Register a dependency on `chttp` as a Git submodule:
+ * @code
+ *  > mkdir libs
+ *  > git submodule add git://.../chttp.git libs/chttp
+ * @endcode
+ *
+ * Check out a specific version:
+ * @code
+ *  > cd libs/chttp
+ *  > git tag
+ *  v0.1
+ *
+ *  > git checkout v0.1
+ *  > cd ../..
+ *  > git add libs/chttp
+ * @endcode
+ * 
+ * Add `chttp` targets to your CMake project:
+ * @code
+ *  set(chttp_DIR
+ *    ${PROJECT_SOURCE_DIR}/libs/chttp
+ *  )
+ *  find_package(chttp)
+ * @endcode
+ *
+ * Make sure your CMake project can `#include <head.h>`:
+ * @code
+ *  include_directories(
+ *    ${chttp_include_dirs}
+ *  )
+ * @endcode
+ *
+ * Link against the `chttp` library:
+ * @code
+ *  add_executable(my-application
+ *    ...
+ *  )
+ *  add_depdencies(my-application chttp)
+ *  target_link_libraries(my-application ${chttp_libraries})
+ * @endcode
+ *
+ * @subsection compile Compiling
+ *
+ * Generate the build scripts for your favorite toolchain:
+ * @code
+ *  cmake .. -G "NMake Makefiles"
+ * @endcode
+ *
+ * Compile the source code:
+ * @code
+ *  nmake
+ * @endcode
+ *
+ * @subsection documentation Compiling the documentation
+ *
+ * Compiling the documentation for developer builds:
+ * @code
+ *  cmake .. -DPROJECT_VERSION=dev
+ *  nmake help
+ * @endcode
+ *
+ * Open the HTML documentation in `work/help/html/index.html`.
+ *
+ * Compiling the documentation for official releases:
+ * @code
+ *  cmake .. -DPROJECT_VERSION=0.1
+ *  nmake help
+ * @endcode
+ *
  */

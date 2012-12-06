@@ -27,44 +27,37 @@ cmake_minimum_required(VERSION 2.6)
 
 project(chttp)
 
-# Compile API documentation from source code.
-function(add_api_documentation target)
-  if(DOXYGEN_EXECUTABLE)
-    add_custom_target(
-      ${target}
-      COMMAND
-        ${DOXYGEN_EXECUTABLE}
-      WORKING_DIRECTORY
-        ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT
-        "Compiling documentation."
-      VERBATIM
-    )
-  endif()
-endfunction()
-
+# Ignore Microsoft's warnings about standard functions.
 if(MSVC)
-  # Ignore Microsoft's recommendations of
-  # safety at the expense of portability.
   add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
     -D_SCL_SECURE_NO_WARNINGS
+    -D_CRT_NONSTDC_NO_DEPRECATE
   )
 endif()
 
-enable_testing()
-
 # Put all libraries and executables in the build folder root.
-set(LIBRARY_OUTPUT_PATH    ${PROJECT_BINARY_DIR})
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+set(LIBRARY_OUTPUT_PATH    "${PROJECT_BINARY_DIR}")
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 # Build the primary target.
 add_subdirectory(code)
 
 # Optional targets (skip when building as a dependency).
-if(${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
+if("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
 
-  # Build API documentation.
+  # Locate the library & include paths just like our clients.
+  find_package(chttp
+    PATHS "${PROJECT_SOURCE_DIR}"
+  )
+
+  # Build demo projects.
+  include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/code
+  )
+  add_subdirectory(demo)
+
+  # Add a "help" target to build API documentation.
   find_package(Doxygen QUIET)
   if(PROJECT_VERSION AND NOT ("${PROJECT_VERSION}" STREQUAL "dev"))
     set(DOXYGEN_SHOW_INTERNALS NO)
@@ -75,23 +68,20 @@ if(${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
     set(DOXYGEN_HIDE_INTERNALS NO)
   endif()
   configure_file(
-    ${CMAKE_SOURCE_DIR}/Doxyfile
-    ${CMAKE_BINARY_DIR}/Doxyfile @ONLY
+    ${PROJECT_SOURCE_DIR}/Doxyfile
+    ${PROJECT_BINARY_DIR}/help/Doxyfile @ONLY
   )
-  add_api_documentation(help)
-
-  # Resolve include directives as if installed on the system.
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/code)
-
-  # Configure the library and its dependencies.
-  set(chttp_libraries
-    chttp
-  )
-
-  # Build demo projects.
-  add_subdirectory(demo)
-
-  # Register unit tests.
-  #add_subdirectory(test)
+  if(DOXYGEN_EXECUTABLE)
+    add_custom_target(
+      help
+      COMMAND
+        ${DOXYGEN_EXECUTABLE}
+      WORKING_DIRECTORY
+        ${PROJECT_BINARY_DIR}/help
+      COMMENT
+        "Compiling documentation."
+      VERBATIM
+    )
+  endif()
 
 endif()
