@@ -170,6 +170,8 @@ int http_head_push_value (http_head * self, const char * value, size_t size);
 /*!
  * @brief Restore the header invariants after a successful partial push.
  * @param self
+ * @param mark A value obtained using @c http_head_mark before the partial push
+ *  operation began.
  * @return 0 on failure (e.g. invariants are not respected), else non-zero.
  *
  * @pre @c http_head_push_value just succeeded.
