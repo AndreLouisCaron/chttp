@@ -37,8 +37,7 @@ int main(int argc, char ** argv)
 {
     const char field[] = "Content-Lenght";
     const char value[] = "4096";
-    size_t mark = 0;
-    const char * match = 0;
+    http_mark mark;
 
     http_head head;
     http_head_init(&head, 10);
@@ -50,9 +49,15 @@ int main(int argc, char ** argv)
         return (EXIT_FAILURE);
     }
 
+    // Start a partial push.
+    if (!http_head_mark(&head, &mark))
+    {
+        fprintf(stderr, "Could not start operation.\n");
+        return (EXIT_FAILURE);
+    }
+
     // Attemp to push more data than the buffer can hold.
-    mark = http_head_mark(&head);
-    if (http_head_push_field(&head, field, strlen(field)))
+    if (http_head_push_field(&mark, field, strlen(field)))
     {
         fprintf(stderr, "Field push should fail.\n");
         return (EXIT_FAILURE);

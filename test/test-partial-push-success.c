@@ -37,25 +37,31 @@ int main(int argc, char ** argv)
 {
     const char field[] = "Content-Lenght";
     const char value[] = "201";
-    size_t mark = 0;
     const char * match = 0;
+    http_mark mark;
 
     http_head head;
     http_head_init(&head, 4*1024);
 
+    // Start a partial push.
+    if (!http_head_mark(&head, &mark))
+    {
+        fprintf(stderr, "Could not start operation.\n");
+        return (EXIT_FAILURE);
+    }
+
     // Check that a single call to each part succeeds.
-    mark = http_head_mark(&head);
-    if (!http_head_push_field(&head, field, strlen(field)))
+    if (!http_head_push_field(&mark, field, strlen(field)))
     {
         fprintf(stderr, "Could not push field.\n");
         return (EXIT_FAILURE);
     }
-    if (!http_head_push_field(&head, value, strlen(value)))
+    if (!http_head_push_value(&mark, value, strlen(value)))
     {
         fprintf(stderr, "Could not push value.\n");
         return (EXIT_FAILURE);
     }
-    if (!http_head_commit(&head, mark))
+    if (!http_head_commit(&mark))
     {
         fprintf(stderr, "Could not commit.\n");
         return (EXIT_FAILURE);

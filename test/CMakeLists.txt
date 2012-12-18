@@ -51,5 +51,7 @@ add_test(NAME test-demo-c++ COMMAND demo-c++)
 
 # Register several test programs.
 add_test_program(test-partial-push-success)
+add_test_program(test-partial-push-in-two-parts)
+add_test_program(test-partial-push-success-with-zero-length)
 add_test_program(test-partial-push-field-overflow)
 add_test_program(test-partial-push-value-overflow)

@@ -25,7 +25,7 @@
 
 /*!
  * @file
- * @brief Test that validates that a overflow detection succeeds.
+ * @brief Test for a successful partial push sequence.
  */
 
 #include <chttp.h>
@@ -36,19 +36,12 @@
 int main(int argc, char ** argv)
 {
     const char field[] = "Content-Lenght";
-    const char value[] = "4096";
+    const char value[] = "201";
     const char * match = 0;
     http_mark mark;
 
     http_head head;
-    http_head_init(&head, 20);
-
-    // Verify our test data :-)
-    if (strlen(field)+strlen(value)+3 <= head.size)
-    {
-        fprintf(stderr, "Test buffer too large.\n");
-        return (EXIT_FAILURE);
-    }
+    http_head_init(&head, 4*1024);
 
     // Start a partial push.
     if (!http_head_mark(&head, &mark))
@@ -57,15 +50,43 @@ int main(int argc, char ** argv)
         return (EXIT_FAILURE);
     }
 
-    // Attempt to push more data than the buffer can hold.
-    if (!http_head_push_field(&mark, field, strlen(field)))
+    // Check that a single call to each part succeeds.
+    if (!http_head_push_field(&mark, field, strlen(field)-4))
     {
-        fprintf(stderr, "Field push should succeed.\n");
+        fprintf(stderr, "Could not push field.\n");
         return (EXIT_FAILURE);
     }
-    if (http_head_push_value(&mark, value, strlen(value)))
+    if (!http_head_push_field(&mark, field+strlen(field)-4, 4))
     {
-        fprintf(stderr, "Value push should fail.\n");
+        fprintf(stderr, "Could not push field.\n");
+        return (EXIT_FAILURE);
+    }
+    if (!http_head_push_value(&mark, value, strlen(value)-2))
+    {
+        fprintf(stderr, "Could not push value.\n");
+        return (EXIT_FAILURE);
+    }
+    if (!http_head_push_value(&mark, value+strlen(value)-2, 2))
+    {
+        fprintf(stderr, "Could not push value.\n");
+        return (EXIT_FAILURE);
+    }
+    if (!http_head_commit(&mark))
+    {
+        fprintf(stderr, "Could not commit.\n");
+        return (EXIT_FAILURE);
+    }
+
+    // Verify that the header value is found and matches.
+    match = http_head_find(&head, field);
+    if (strlen(match) == 0)
+    {
+        fprintf(stderr, "Header not found.\n");
+        return (EXIT_FAILURE);
+    }
+    if (strcmp(match, value) != 0)
+    {
+        fprintf(stderr, "Header value doesn't match.\n");
         return (EXIT_FAILURE);
     }
 

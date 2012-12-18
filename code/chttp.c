@@ -55,17 +55,20 @@ void http_head_kill (http_head * self)
 
 int http_head_push (http_head * self, const char * field, const char * value)
 {
-    const size_t mark = http_head_mark(self);
-    if (!http_head_push_field(self, field, strlen(field))) {
-        http_head_cancel(self, mark);
+    http_mark mark;
+    if (!http_head_mark(self, &mark)) {
         return 0;
     }
-    if (!http_head_push_value(self, value, strlen(value))) {
-        http_head_cancel(self, mark);
+    if (!http_head_push_field(&mark, field, strlen(field))) {
+        http_head_cancel(&mark);
         return 0;
     }
-    if (!http_head_commit(self, mark)) {
-        http_head_cancel(self, mark);
+    if (!http_head_push_value(&mark, value, strlen(value))) {
+        http_head_cancel(&mark);
+        return 0;
+    }
+    if (!http_head_commit(&mark)) {
+        http_head_cancel(&mark);
         return 0;
     }
     return 1;
@@ -84,12 +87,19 @@ const char * http_head_find (const http_head * self, const char * field)
     return ("");
 }
 
-size_t http_head_mark (const http_head * self)
+int http_head_mark (http_head * self, http_mark * mark)
 {
-    return (self->used);
+    if ((self->size-self->used) < 4) {
+        memset(mark, 0, sizeof(http_mark));
+        return 0;
+    }
+    mark->head = self;
+    mark->base = self->used;
+    mark->mode = 0;
+    return (1);
 }
 
-int http_head_push_field (http_head * self, const char * field, size_t size)
+static int _push_field (http_head * self, const char * field, size_t size)
 {
     size_t used = 0;
     // Check that enough space is remaining.
@@ -101,11 +111,20 @@ int http_head_push_field (http_head * self, const char * field, size_t size)
         self->data[self->used++] = field[used++];
     }
     // Add null terminator.
-    self->data[self->used++] = '\0';
+    self->data[self->used] = '\0';
     return 1;
 }
 
-int http_head_push_value (http_head * self, const char * value, size_t size)
+int http_head_push_field (http_mark * self, const char * field, size_t size)
+{
+    // Make sure we're still inserting a header name.
+    if (self->mode != 0) {
+        return 0;
+    }
+    return (_push_field(self->head, field, size));
+}
+
+static int _push_value (http_head * self, const char * value, size_t size)
 {
     size_t used = 0;
     // Check that enough space is remaining.
@@ -117,11 +136,29 @@ int http_head_push_value (http_head * self, const char * value, size_t size)
         self->data[self->used++] = value[used++];
     }
     // Add null terminator.
-    self->data[self->used++] = '\0';
+    self->data[self->used] = '\0';
     return 1;
 }
 
-int http_head_commit (http_head * self, size_t mark)
+int http_head_push_value (http_mark * self, const char * field, size_t size)
+{
+    // Swich to value if necessary.
+    if (self->mode == 0)
+    {
+        // Disallow empty names.
+        if (self->head->used == self->base) {
+            return 0;
+        }
+        ++(self->head->used), self->mode = 1;
+    }
+    // Make sure we're still inserting header data.
+    if (self->mode != 1) {
+        return 0;
+    }
+    return (_push_value(self->head, field, size));
+}
+
+static int _commit (http_head * self, size_t mark)
 {
     size_t nulls = 0;
     // Validate the mark.
@@ -129,18 +166,37 @@ int http_head_commit (http_head * self, size_t mark)
         return 0;
     }
     // Verify that the partial operations put valid null terminators.
-    while (mark < self->used) {
+    while (mark <= self->used) {
         nulls += (self->data[mark++] == '\0');
     }
-    if ((nulls != 2) || (self->data[self->used-1] != '\0')) {
+    if ((nulls != 2) || (self->data[self->used] != '\0')) {
         return 0;
     }
     // Restore buffer invariant.
-    self->data[self->used] = '\0';
+    self->data[self->used++] = '\0';
     return 1;
 }
 
-int http_head_cancel (http_head * self, size_t mark)
+int http_head_commit (http_mark * self)
+{
+    // Allow empty values.
+    if (self->mode == 0)
+    {
+        // Disallow empty names.
+        if (self->head->used == self->base) {
+            return 0;
+        }
+        // Switch to writing header data.
+        ++(self->head->used), self->mode = 1;
+    }
+    // Make sure we're still inserting header data.
+    if (self->mode != 1) {
+        return 0;
+    }
+    return (_commit(self->head, self->base));
+}
+
+static int _cancel (http_head * self, size_t mark)
 {
     // Validate the mark.
     if ((mark >= (self->size-3))) {
@@ -149,6 +205,11 @@ int http_head_cancel (http_head * self, size_t mark)
     // Restore buffer invariants.
     self->data[self->used=mark] = '\0';
     return 1;
+}
+
+int http_head_cancel (http_mark * self)
+{
+    return (_cancel(self->head, self->base));
 }
 
 void http_cursor_init (http_cursor * self, const http_head * head)

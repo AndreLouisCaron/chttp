@@ -86,6 +86,8 @@ typedef struct http_head
  * @param self
  * @param size Buffer capacity (fixed).
  * @return 0 if memory allocation fails, else non-zero.
+ *
+ * @memberof http_head
  */
 int http_head_init (http_head * self, size_t size);
 
@@ -94,6 +96,8 @@ int http_head_init (http_head * self, size_t size);
  * @param self
  * @pre @c http_head_init has been called.
  * @post @c http_head_init can be called again to recycle the buffer instance.
+ *
+ * @memberof http_head
  */
 void http_head_kill (http_head * self);
 
@@ -104,6 +108,8 @@ void http_head_kill (http_head * self);
  * @param value HTTP header data.
  * @return 0 on failure (e.g. attempted to exceed the buffer capacity), else
  *  non-zero.
+ *
+ * @memberof http_head
  */
 int http_head_push (http_head * self, const char * field, const char * value);
 
@@ -119,20 +125,53 @@ int http_head_push (http_head * self, const char * field, const char * value);
  * start of the buffer, it is usually more efficient to use an @c http_cursor
  * to iterate over all headers.
  *
+ * @memberof http_head
  * @see http_cursor
  */
 const char * http_head_find (const http_head * self, const char * field);
 
 /*!
+ * @brief Transaction for partial push operations.
+ *
+ * @see 
+ */
+typedef struct http_mark
+{
+    /*!
+     * @private
+     * @brief Holds a reference to the buffer we're writing to.
+     */
+    http_head * head;
+
+    /*!
+     * @private
+     * @brief Holds @c http_head::used to rollback a failed partial push.
+     */
+    size_t base;
+
+    /*!
+     * @private
+     * @brief 0 while inserting the header name, 1 while inserting data.
+     */
+    int mode;
+
+} http_mark;
+
+/*!
  * @brief Take the current position in the stream.
  * @param self
- * @return A value suitable for passing to @c http_head_cancel.
+ * @param[out] mark A value suitable for passing to @c http_head_cancel or @c
+ *  http_head_commit.
+ * @return 0 on failure (e.g. not enough space in @a self), else non-zero.
+ * @post @a mark is initialized.
  *
+ * @memberof http_mark
+ * @see http_head_commit
  * @see http_head_cancel
  * @see http_head_push_field
  * @see http_head_push_value
  */
-size_t http_head_mark (const http_head * self);
+int http_head_mark (http_head * self, http_mark * mark);
 
 /*!
  * @brief Appends partial header data.
@@ -147,10 +186,10 @@ size_t http_head_mark (const http_head * self);
  *  prohibited.  A successful call to @c http_head_cancel or @c
  *  http_head_commit is required to restore the buffer invariants.
  *
- * @see http_head_mark
+ * @memberof http_mark
  * @see http_head_push_value
  */
-int http_head_push_field (http_head * self, const char * field, size_t size);
+int http_head_push_field (http_mark * self, const char * field, size_t size);
 
 /*!
  * @brief Appends partial header data.
@@ -162,15 +201,15 @@ int http_head_push_field (http_head * self, const char * field, size_t size);
  *
  * @pre @c http_head_push_field just succeeded.
  *
- * @see http_head_mark
+ * @memberof http_mark
  * @see http_head_push_field
+ * @see http_head_commit
  */
-int http_head_push_value (http_head * self, const char * value, size_t size);
+int http_head_push_value (http_mark * self, const char * value, size_t size);
 
 /*!
  * @brief Restore the header invariants after a successful partial push.
- * @param self
- * @param mark A value obtained using @c http_head_mark before the partial push
+ * @param self A value obtained using @c http_head_mark before the partial push
  *  operation began.
  * @return 0 on failure (e.g. invariants are not respected), else non-zero.
  *
@@ -179,16 +218,15 @@ int http_head_push_value (http_head * self, const char * value, size_t size);
  *  the sequence of partial push operations is cancelled.  If the function
  *  returns non-zero, @a self does not include the partial push operations.
  *
- * @see http_head_push_field
+ * @memberof http_mark
  * @see http_head_push_value
  * @see http_head_cancel
  */
-int http_head_commit (http_head * self, size_t mark);
+int http_head_commit (http_mark * self);
 
 /*!
  * @brief Restore a previous state after a failed partial push.
- * @param self
- * @param mark A value obtained using @c http_head_mark before the partial push
+ * @param self A value obtained using @c http_head_mark before the partial push
  *  operation began.
  * @return 0 on failure (e.g. @a mark is invalid), else non-zero.
  *
@@ -196,12 +234,12 @@ int http_head_commit (http_head * self, size_t mark);
  *  failed.
  * @post If the function succeeds, the buffer's invariants are restored.
  *
- * @see http_head_mark
+ * @memberof http_mark
  * @see http_head_push_field
  * @see http_head_push_value
  * @see http_head_commit
  */
-int http_head_cancel (http_head * self, size_t mark);
+int http_head_cancel (http_mark * self);
 
 /*!
  * @brief Iterator for HTTP headers.
@@ -269,7 +307,7 @@ typedef struct http_cursor
  * @post @a self is ready for the first call to @c http_cursor_next.  Iteration
  *  has not started.
  *
- * @see http_cursor
+ * @memberof http_cursor
  * @see http_cursor_next
  */
 void http_cursor_init (http_cursor * self, const http_head * head);
@@ -283,7 +321,7 @@ void http_cursor_init (http_cursor * self, const http_head * head);
  *  value, respectively.  If the return value is 0, they both point to empty
  *  (zero-length) strings.
  *
- * @see http_cursor
+ * @memberof http_cursor
  * @see http_cursor_init
  */
 int http_cursor_next (http_cursor * self);
